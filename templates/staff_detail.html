@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ staff.name }} - Topshiriqlar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-r from-green-400 to-blue-500 min-h-screen flex items-center justify-center">
+    <div class="container mx-auto p-4">
+        <div class="flex justify-between items-center mb-4">
+            <a href="{% url 'staff_list' %}" class="mt-4 inline-block bg-indigo-600 text-white py-1 px-3 rounded hover:bg-indigo-800 text-sm">←</a>
+
+            <h1 class="text-2xl font-bold text-white">{{ staff.name }}</h1>
+            <button onclick="openModal('addAssignmentModal')" class="bg-green-500 text-white p-2 rounded-full hover:bg-green-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+            </button>
+        </div>
+        {% if error %}
+        <p class="text-red-500 text-sm mb-4">{{ error }}</p>
+        {% endif %}
+        {% if message %}
+        <p class="text-green-600 text-sm mb-4">{{ message }}</p>
+        {% endif %}
+        <div class="bg-white shadow-lg rounded-lg overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <tbody class="bg-gray-50">
+                    <tr class="bg-gray-200 font-semibold">
+                        <td class="py-3 px-4">Sana</td>
+                        <td class="py-3 px-4">Model</td>
+                        <td class="py-3 px-4">Soni</td>
+                        <td class="py-3 px-4">Haq</td>
+                        <td class="py-3 px-4">Harakat</td>
+                    </tr>
+                    {% for assignment in assignments %}
+                    <tr class="border-b hover:bg-gray-100 transition duration-200">
+                        <td class="py-3 px-4">{{ assignment.date | date:'d-M' }}</td>
+                        <td class="py-3 px-4">{{ assignment.work_type }} so'm</td>
+                        <td class="py-3 px-4">{{ assignment.quantity }}</td>
+                        <td class="py-3 px-4">{{ assignment.money }} so'm</td>
+                        <td class="py-3 px-4 flex space-x-2">
+                            <button onclick="openModal('editAssignmentModal{{ assignment.pk }}')" class="text-blue-500 hover:text-blue-700">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15.828l-5.657 1.414 1.414-5.657L18.414 2.586z"></path>
+                                </svg>
+                            </button>
+                            <button onclick="openModal('deleteAssignmentModal{{ assignment.pk }}')" class="text-red-500 hover:text-red-700">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="py-3 px-4 text-center text-gray-500">Bu hodim uchun topshiriqlar topilmadi.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-4 flex space-x-2">
+            {% if total_money %}
+            <button onclick="openModal('totalMoneyModal')" class="bg-teal-500 text-white py-1 px-3 rounded text-sm hover:bg-teal-600">Umumiy haq</button>
+            <button onclick="openModal('payMoneyModal')" class="bg-orange-500 text-white py-1 px-3 rounded text-sm hover:bg-orange-600">Haqni berish</button>
+            {% endif %}
+        </div>
+
+        <!-- Add Assignment Modal -->
+        <div id="addAssignmentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+            <div class="bg-white p-4 rounded-lg w-full max-w-sm">
+                <h2 class="text-lg font-bold mb-3">Yangi topshiriq qo'shish</h2>
+                <form method="POST" action="{% url 'add_assignment' staff.pk %}">
+                    {% csrf_token %}
+                    {% if error %}
+                    <p class="text-red-500 text-sm mb-3">{{ error }}</p>
+                    {% endif %}
+                    <div class="mb-3">
+                        <label class="block text-gray-700 text-sm">Model (narxi)</label>
+                        <input type="number" name="work_type" min="1" step="1" class="w-full p-2 border rounded text-sm" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-gray-700 text-sm">Soni</label>
+                        <input type="number" name="quantity" min="1" step="1" class="w-full p-2 border rounded text-sm" required>
+                    </div>
+                    <div class="flex justify-end space-x-2">
+                        <button type="button" onclick="closeModal('addAssignmentModal')" class="bg-gray-500 text-white py-1 px-3 rounded text-sm hover:bg-gray-600">Bekor qilish</button>
+                        <button type="submit" class="bg-green-500 text-white py-1 px-3 rounded text-sm hover:bg-green-600">Saqlash</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Edit Assignment Modals -->
+        {% for assignment in assignments %}
+        <div id="editAssignmentModal{{ assignment.pk }}" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+            <div class="bg-white p-4 rounded-lg w-full max-w-sm">
+                <h2 class="text-lg font-bold mb-3">Topshiriqni tahrirlash</h2>
+                <form method="POST" action="{% url 'edit_assignment' assignment.pk %}">
+                    {% csrf_token %}
+                    {% if error %}
+                    <p class="text-red-500 text-sm mb-3">{{ error }}</p>
+                    {% endif %}
+                    <div class="mb-3">
+                        <label class="block text-gray-700 text-sm">Ish turi</label>
+                        <input type="number" name="work_type" value="{{ assignment.work_type }}" class="w-full p-2 border rounded text-sm" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-gray-700 text-sm">Soni</label>
+                        <input type="number" name="quantity" value="{{ assignment.quantity }}" class="w-full p-2 border rounded text-sm" required>
+                    </div>
+                    <div class="flex justify-end space-x-2">
+                        <button type="button" onclick="closeModal('editAssignmentModal{{ assignment.pk }}')" class="bg-gray-500 text-white py-1 px-3 rounded text-sm hover:bg-gray-600">Bekor qilish</button>
+                        <button type="submit" class="bg-blue-500 text-white py-1 px-3 rounded text-sm hover:bg-blue-600">Saqlash</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Delete Assignment Modal -->
+        <div id="deleteAssignmentModal{{ assignment.pk }}" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+            <div class="bg-white p-4 rounded-lg w-full max-w-sm">
+                <h2 class="text-lg font-bold mb-3">Topshiriqni o'chirish</h2>
+                <p class="mb-3 text-sm">Haqiqatan ham ushbu topshiriqni o'chirmoqchimisiz?</p>
+                <form method="POST" action="{% url 'delete_assignment' assignment.pk %}">
+                    {% csrf_token %}
+                    <div class="flex justify-end space-x-2">
+                        <button type="button" onclick="closeModal('deleteAssignmentModal{{ assignment.pk }}')" class="bg-gray-500 text-white py-1 px-3 rounded text-sm hover:bg-gray-600">Bekor qilish</button>
+                        <button type="submit" class="bg-red-500 text-white py-1 px-3 rounded text-sm hover:bg-red-600">O'chirish</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Total Money Modal -->
+        <div id="totalMoneyModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+            <div class="bg-white p-4 rounded-lg w-full max-w-sm">
+                <h2 class="text-lg font-bold mb-3">Umumiy haq</h2>
+                <p class="mb-3 text-sm">
+                    {{ staff.name }} uchun umumiy haq: <strong>{{ total_money|default:0 }}</strong> so'm
+                </p>
+                <div class="flex justify-end">
+                    <button type="button" onclick="closeModal('totalMoneyModal')" class="bg-gray-500 text-white py-1 px-3 rounded text-sm hover:bg-gray-600">Yopish</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pay Money Modal -->
+        <div id="payMoneyModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+            <div class="bg-white p-4 rounded-lg w-full max-w-sm">
+                <h2 class="text-lg font-bold mb-3">Haqni berish</h2>
+                {% if message %}
+                <p class="mb-3 text-sm text-green-600">{{ message }}</p>
+                <div class="flex justify-end">
+                    <button type="button" onclick="closeModal('payMoneyModal')" class="bg-gray-500 text-white py-1 px-3 rounded text-sm hover:bg-gray-600">Yopish</button>
+                </div>
+                {% else %}
+                <p class="mb-3 text-sm">Haqiqatan ham {{ staff.name }} ga haqni bermoqchimisiz?</p>
+                <form method="POST" action="{% url 'pay_money' staff.pk %}">
+                    {% csrf_token %}
+                    <div class="flex justify-end space-x-2">
+                        <button type="button" onclick="closeModal('payMoneyModal')" class="bg-gray-500 text-white py-1 px-3 rounded text-sm hover:bg-gray-600">Bekor qilish</button>
+                        <button type="submit" class="bg-orange-500 text-white py-1 px-3 rounded text-sm hover:bg-orange-600">Haqni berish</button>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

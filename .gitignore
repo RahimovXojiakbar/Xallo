@@ -1,0 +1,4 @@
+env
+main/__pycache__/**
+config/__pycache__/**
+media/
